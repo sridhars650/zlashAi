@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+
   // Event listener for keydown events
   userInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {

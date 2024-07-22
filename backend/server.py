@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import requests
 
 app = Flask(__name__)
+CORS(app)  # Allow all origins by default
 
 # Replace this URL with the actual URL you want to proxy requests to
 TARGET_URL = 'https://talkai.info/chat/send/'
