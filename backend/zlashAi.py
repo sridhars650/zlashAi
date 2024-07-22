@@ -1,6 +1,10 @@
 from flask import Flask, request, jsonify
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 
