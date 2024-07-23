@@ -10,63 +10,104 @@ document.addEventListener('DOMContentLoaded', () => {
       chatBox.scrollTop = chatBox.scrollHeight; // Scroll to the bottom
   }
 
-  async function sendMessage() {
-    const userMessage = userInput.value.trim();
-    if (!userMessage) return;
+  // Keep track of message history
+  let messageHistory = [
+      // You can initialize with some previous messages if needed
+  ];
 
-    // Append the user's message to the chat box
-    appendMessage('user', userMessage);
-    userInput.value = '';
+  function saveConversation(history) {
+    localStorage.setItem('conversationHistory', JSON.stringify(history));
+}
 
-    // Prepare the request payload
-    const requestBody = {
-        type: "chat",
-        messagesHistory: [
-            {
-                id: "80388426-fa52-40ae-a2e1-dd3003fc3ed3",
-                from: "you",
-                content: userMessage
-            }
-        ],
-        settings: {
-            model: "gpt-4o-mini"
-        }
-    };
+function loadConversation() {
+    const history = localStorage.getItem('conversationHistory');
+    return history ? JSON.parse(history) : [];
+}
 
-    try {
-        // Send the POST request to the proxy server
-        const response = await fetch('https://your-render-url.proxy/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody),
-        });
+async function sendMessage() {
+  const userMessage = userInput.value.trim();
+  if (!userMessage) return;
 
-        // Handle the response
-        const data = await response.json();
+  // Append the user's message to the chat box
+  appendMessage('user', userMessage);
+  userInput.value = '';
 
-        // Debugging output
-        console.log('Response Data:', data);
+  // Prepare the FormData object
+  const formData = new FormData();
+  formData.append('_wpnonce', '0af71b0b24');
+  formData.append('post_id', '7');
+  formData.append('url', 'https://chatgbt.one');
+  formData.append('action', 'wpaicg_chat_shortcode_message');
+  formData.append('message', userMessage);
+  formData.append('bot_id', '0');
+  formData.append('user_name', 'Zlash'); // Add the user's name
 
-        // Ensure data is in expected format and append the response to the chat box
-        if (data && data.messagesHistory) {
-            data.messagesHistory.forEach(message => {
-                if (message.from === 'bot') {
-                    appendMessage('bot', message.content);
-                }
-            });
-        } else {
-            appendMessage('bot', 'Unexpected response format.');
-        }
-    } catch (error) {
-        console.error('Error fetching data:', error);
-        appendMessage('bot', 'Error fetching response. Please try again later.');
-    }
+  try {
+      const response = await fetch('http://localhost:5001/proxy', {
+          method: 'POST',
+          body: formData,
+          headers: {
+              'Accept': '*/*',
+              'Origin': 'https://chatgbt.one',
+              'Referer': 'https://chatgbt.one/',
+              'User-Agent': navigator.userAgent,
+              'Cookie': document.cookie,
+          },
+      });
+
+      const rawResponse = await response.text();
+      console.log('Raw Response:', rawResponse); // Debugging output
+
+      try {
+          const data = JSON.parse(rawResponse);
+          if (data.data) {
+              // Append the bot's response to the chat box
+              appendMessage('bot', data.data);
+
+              // Debugging output
+              console.log('Conversation History:', data.conversation_history);
+              updateConversationHistory(data.conversation_history);
+          } else {
+              appendMessage('bot', 'No data available.');
+          }
+      } catch (parseError) {
+          console.error('Error parsing response:', parseError);
+          appendMessage('bot', 'Error parsing response.');
+      }
+  } catch (error) {
+      console.error('Error fetching data:', error);
+      appendMessage('bot', 'Error fetching response. Please try again later.');
+  }
+}
+
+function updateConversationHistory(conversationHistory) {
+  // This function should update the conversation history in the UI
+  // Implementation depends on your UI structure
+  console.log('Updated Conversation History:', conversationHistory);
+}
+
+function appendMessage(role, message) {
+  // Append the message to the chat UI
+  // Implementation depends on your UI structure
+  const chatBox = document.getElementById('chat-box');
+  const messageElement = document.createElement('div');
+  messageElement.classList.add(role);
+  messageElement.textContent = message;
+  chatBox.appendChild(messageElement);
 }
 
 
 
+
+
+
+  // Utility function to generate UUID
+  function generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+      });
+  }
 
   // Event listener for keydown events
   userInput.addEventListener('keydown', (event) => {

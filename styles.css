@@ -1,3 +1,4 @@
+/* General Styles */
 body {
     font-family: Arial, sans-serif;
     display: flex;
@@ -8,6 +9,7 @@ body {
     background-color: #f0f0f0;
 }
 
+/* Chat Container */
 .chat-container {
     display: flex;
     flex-direction: column;
@@ -15,28 +17,29 @@ body {
     max-width: 400px;
     background: white;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden; /* Ensure borders and shadows look consistent */
 }
 
+/* Chat Box */
 .chat-box {
     flex: 1;
     padding: 20px;
-    overflow-y: scroll;
+    overflow-y: auto; /* Scrollbar will appear as needed */
     border-bottom: 1px solid #ddd;
     background-color: #fafafa;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
 }
 
+/* Input Container */
 .input-container {
     display: flex;
+    align-items: center; /* Align items vertically */
     border-top: 1px solid #ddd;
     padding: 10px;
     background-color: #fff;
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
 }
 
+/* Input Field */
 input[type="text"] {
     flex: 1;
     padding: 10px;
@@ -44,8 +47,15 @@ input[type="text"] {
     border-radius: 4px;
     margin-right: 10px;
     font-size: 14px;
+    transition: border-color 0.2s ease; /* Smooth border color transition */
 }
 
+input[type="text"]:focus {
+    border-color: #007bff; /* Highlight input on focus */
+    outline: none; /* Remove default outline */
+}
+
+/* Submit Button */
 button {
     padding: 10px 20px;
     border: none;
@@ -54,26 +64,53 @@ button {
     color: white;
     cursor: pointer;
     font-size: 14px;
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions */
 }
 
 button:hover {
     background-color: #0056b3;
+    transform: scale(1.05); /* Slightly enlarge button on hover */
 }
 
+button:active {
+    transform: scale(1); /* Return to original size on click */
+}
+
+/* Message Styles */
 .message {
     padding: 10px;
     margin-bottom: 10px;
     border-radius: 4px;
+    max-width: 80%; /* Limit width of messages */
+    word-wrap: break-word; /* Ensure long words break properly */
 }
 
+/* User Message */
 .message.user {
-    background-color: #d1ecf1;
-    color: #0c5460;
+    background-color: #d1ecf1; /* Light blue for user messages */
+    color: #0c5460; /* Dark blue text */
     align-self: flex-end;
+    border: 1px solid #bcdff1; /* Light blue border */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Light shadow */
 }
 
+/* Bot Message */
 .message.bot {
-    background-color: #f8d7da;
-    color: #721c24;
+    background-color: #f8d7da; /* Light red for bot messages */
+    color: #721c24; /* Dark red text */
     align-self: flex-start;
+    border: 1px solid #f5c6cb; /* Light red border */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Light shadow */
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .chat-container {
+        width: 100%;
+        max-width: none; /* Allow full width on smaller screens */
+    }
+
+    .message {
+        max-width: 90%; /* Increase message width on small screens */
+    }
 }
