@@ -4,6 +4,7 @@ from flask_session import Session
 import requests
 import logging
 import ssl
+import os
 
 app = Flask(__name__)
 
@@ -34,15 +35,23 @@ def proxy():
         # Append the new user message to the conversation history
         session['conversation_history'].append({'role': 'user', 'content': user_message})
 
+        # Prepare the conversation history string
+        if session['conversation_history']:
+            history_string = "\n".join(
+                f"User: {entry['content']}" if entry['role'] == 'user' else f"ZlashAi: {entry['content']}"
+                for entry in session['conversation_history']
+            )
+        else:
+            history_string = ""
+
         # Prepare the request data
         data = {
             '_wpnonce': request.form.get('_wpnonce'),
             'post_id': request.form.get('post_id'),
             'url': request.form.get('url'),
             'action': request.form.get('action'),
-            'message': user_message,
-            'bot_id': request.form.get('bot_id'),
-            'conversation_history': session['conversation_history']
+            'message': f"Previous history:\n{history_string}\nNow, the user asks: {user_message}",
+            'bot_id': request.form.get('bot_id')
         }
 
         headers = {
@@ -50,7 +59,7 @@ def proxy():
             'Origin': 'https://chatgbt.one',
             'Referer': 'https://chatgbt.one/',
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-            'Cookie': 'cf_clearance=Yg0BQHk9g3eOn8OJ1Z2GQpeCmz1E7ygn3x1jlUMmWJA-1721691622-1.0.1.1-eDB6SpH4UPrW802dSn4A2Q0aCIygWpAhSRNorHNaz0PBthUc0Ru2N1v1sg9SNOINiZSZ1mIWJBANu973SS0M9g; cookieyes-consent=consentid:cTRsNDh0aWhpbWN0aGVGcnFrcDdKYjF4ZFpCcDJiT3k,consent:no,action:yes,necessary:yes,functional:no,analytics:no,performance:no,advertisement:no,other:no; wpaicg_chat_client_id=t_b8760ca3b13366449de0adfc55658d; wpaicg_conversation_url_shortcode=38631a275182c211de2a6a4406b67203; 38631a275182c211de2a6a4406b67203=a%3A2%3A%7Bi%3A0%3Bs%3A15%3A%22Human%3A%20hey%0AAI%3A%20%22%3Bi%3A1%3Bs%3A34%3A%22Hello%21%20How%20can%20I%20assist%20you%20today%3F%22%3B%7D',
+            'Cookie': os.getenv("COOKIE"),
             'Sec-Ch-Ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',  
             'Sec-Ch-Ua-Mobile': '?0',  
             'Sec-Ch-Ua-Platform': '"macOS"',  
@@ -84,6 +93,11 @@ def proxy():
     except Exception as e:
         app.logger.error('Unexpected error: %s', str(e))
         return jsonify({'error': 'An unexpected error occurred.'}), 500
+
+@app.route('/clear_history', methods=['POST'])
+def clear_history():
+    session.pop('conversation_history', None)
+    return jsonify({'message': 'Conversation history cleared'}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

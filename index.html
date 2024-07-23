@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot</title>
+    <title>Chat App</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="chat-container">
-        <div class="chat-box" id="chat-box"></div>
+        <div id="chat-box" class="chat-box"></div>
         <div class="input-container">
-            <input type="text" id="user-input" placeholder="Type your message here..." />
-            <button onclick="sendMessage()">Send</button>
+            <input type="text" id="user-input" placeholder="Type your message here...">
+            <button id="send-button" onclick="sendMessage()">Send</button>
+            <button id="delete-button" onclick="deleteHistory()">Delete History</button>
         </div>
     </div>
     <script src="chat.js"></script>
