@@ -7,9 +7,8 @@ let userInput = null; // To hold reference to user input
 function appendMessage(role, text) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
-    if (role === 'user') {messageDiv.textContent = text;}
-    else{messageDiv.textContent = marked.parse(text);}
-    console.log(messageDiv.textContent)
+    messageDiv.innerHTML = text; // Use innerHTML to render HTML content
+    console.log(messageDiv.innerHTML)
     chatBox.appendChild(messageDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
     return messageDiv;
@@ -70,7 +69,7 @@ async function llama3(prompt, context = null) {
 
                   // Update the message div with formatted text
                   botMessageDiv.textContent += formattedText;
-                  
+
                   buffer = ''; // Clear buffer after updating
               }
 
@@ -79,6 +78,7 @@ async function llama3(prompt, context = null) {
               }
 
               if (responseData.done) {
+                  botMessageDiv.innerHTML = marked.parse(botMessageDiv.innerHTML)
                   console.log('Response done.'); // Debugging output
                   break;
               }
@@ -123,3 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.sendMessage = sendMessage;
 });
 
+
+function deleteHistory() {
+  chatBox.innerHTML = ''; // Clear all content in the chat box
+}
