@@ -114,3 +114,49 @@ button:active {
         max-width: 90%; /* Increase message width on small screens */
     }
 }
+.chat-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+.chat-box {
+    border: 1px solid #ccc;
+    height: 300px;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+.input-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+input[type="text"] {
+    flex: 1;
+    padding: 10px;
+}
+
+button {
+    padding: 10px 20px;
+}
+
+.message {
+    margin: 5px 0;
+    padding: 5px 10px;
+    border-radius: 4px;
+    background-color: #e1f5fe;
+}
+
+.message.user {
+    background-color: #c8e6c9;
+    text-align: right;
+}
+
+.message.bot {
+    text-align: left;
+}
+
