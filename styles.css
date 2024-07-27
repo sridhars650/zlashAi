@@ -26,32 +26,37 @@ body {
 /* Menu Bar */
 .menu-bar {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     padding: 10px;
     background-color: #007bff;
-    color: white;
     border-radius: 10px 10px 0 0;
-    margin-bottom: 10px;
+    margin-top: 10px;
+    gap: 10px; /* Add gap between menu buttons */
+    overflow-x: auto; /* Make menu bar scrollable */
 }
 
-.menu-bar button {
+/* Menu Button */
+.menu-button {
     padding: 8px 16px;
     border: none;
-    border-radius: 4px;
-    background-color: #0056b3;
-    color: white;
+    border-radius: 20px; /* Rounder corners */
+    background-color: #ffffff; /* White background */
+    color: #007bff; /* Blue text color */
     cursor: pointer;
     font-size: 14px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease, color 0.3s ease, box-shadow 0.3s ease;
+    white-space: nowrap; /* Prevent text wrapping */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow */
 }
 
-.menu-bar button:hover {
-    background-color: #003f7f;
+.menu-button:hover {
+    background-color: #e0e0e0; /* Light grey background on hover */
+    color: #0056b3; /* Darker blue text on hover */
     transform: scale(1.05);
 }
 
-.menu-bar button:active {
+.menu-button:active {
     transform: scale(1);
 }
 
@@ -73,6 +78,7 @@ body {
     padding: 10px;
     background-color: #ffffff;
     gap: 10px;
+    border-radius: 0 0 10px 10px;
 }
 
 /* Input Field */
@@ -91,28 +97,35 @@ input[type="text"]:focus {
     outline: none;
 }
 
-/* Submit Button */
-button {
-    padding: 12px 24px;
+/* Button Container */
+.button-container {
+    display: flex;
+    gap: 10px;
+}
+
+/* Icon Button */
+.icon-button {
+    padding: 12px 20px;
     border: none;
     border-radius: 20px;
     background-color: #007bff;
     color: white;
     cursor: pointer;
     font-size: 16px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow */
 }
 
-button:hover {
+.icon-button:hover {
     background-color: #0056b3;
     transform: scale(1.05);
 }
 
-button:active {
+.icon-button:active {
     transform: scale(1);
 }
 
-button.disabled {
+.icon-button.disabled {
     background-color: #b0c4de;
     cursor: not-allowed;
 }
@@ -166,5 +179,14 @@ button.disabled {
 
     .message {
         max-width: 90%;
+    }
+
+    .menu-bar {
+        gap: 5px; /* Reduce gap between menu buttons on smaller screens */
+    }
+
+    .menu-button {
+        padding: 6px 12px; /* Adjust padding for menu buttons on smaller screens */
+        font-size: 12px; /* Adjust font size for menu buttons on smaller screens */
     }
 }

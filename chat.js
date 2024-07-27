@@ -1,18 +1,16 @@
 const url = "http://localhost:11434/api/generate";
 
-let chatBox = null; // To hold reference to chat box
-let userInput = null; // To hold reference to user input
-let sendButton = null; // To hold reference to send button
-let chatContext = []; // To hold chat context
-let isRequestPending = false; // To track if a request is pending
-let conversations = {}; // To hold different conversations
+let chatBox = null;
+let userInput = null;
+let sendButton = null;
+let chatContext = [];
+let isRequestPending = false;
+let conversations = {};
 
-// Define appendMessage globally
 function appendMessage(role, text) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
-    messageDiv.innerHTML = text; // Use innerHTML to render HTML content
-    console.log(messageDiv.innerHTML);
+    messageDiv.innerHTML = text;
     chatBox.appendChild(messageDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
     return messageDiv;
@@ -46,7 +44,7 @@ async function llama3(prompt, context = null) {
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        let buffer = ""; // Buffer to accumulate incoming text
+        let buffer = "";
         let newContext = context ? context : [];
         let botMessageDiv = null;
 
@@ -55,26 +53,23 @@ async function llama3(prompt, context = null) {
             if (done) break;
 
             const decodedLine = decoder.decode(value, { stream: true });
-            console.log('Received chunk:', decodedLine); // Debugging output
-            buffer += decodedLine; // Accumulate buffer
+            buffer += decodedLine;
 
             try {
                 const responseData = JSON.parse(buffer);
 
                 if (responseData.response) {
-                    buffer = responseData.response; // Use only the new response part
+                    buffer = responseData.response;
 
-                    // Remove spaces before punctuation
                     const formattedText = buffer.replace(/\s([.,!?;:])/g, '$1');
 
                     if (!botMessageDiv) {
                         botMessageDiv = appendMessage('bot', '');
                     }
 
-                    // Update the message div with formatted text
                     botMessageDiv.textContent += formattedText;
 
-                    buffer = ''; // Clear buffer after updating
+                    buffer = '';
                 }
 
                 if (responseData.context) {
@@ -83,7 +78,6 @@ async function llama3(prompt, context = null) {
 
                 if (responseData.done) {
                     botMessageDiv.innerHTML = marked.parse(botMessageDiv.innerHTML);
-                    console.log('Response done.'); // Debugging output
                     break;
                 }
             } catch (e) {
@@ -95,23 +89,24 @@ async function llama3(prompt, context = null) {
     } catch (e) {
         console.error("Request Error:", e);
     } finally {
-        isRequestPending = false; // Reset the flag when request is completed
-        sendButton.disabled = false; // Enable the button
-        sendButton.classList.remove('disabled'); // Remove disabled class
-        updateSendButtonState(); // Update send button state
+        isRequestPending = false;
+        sendButton.disabled = false;
+        sendButton.classList.remove('disabled');
+        updateSendButtonState();
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     chatBox = document.getElementById('chat-box');
     userInput = document.getElementById('user-input');
-    sendButton = document.getElementById('send-button'); // Get reference to send button
-    const menuBar = document.getElementById('menu-bar'); // Get reference to menu bar
-    const newConversationButton = document.getElementById('new-conversation-button'); // Get reference to new conversation button
+    sendButton = document.getElementById('send-button');
+    const newConversationButton = document.getElementById('new-conversation-button');
+    const saveConversationButton = document.getElementById('save-button');
+    const deleteButton = document.getElementById('delete-button');
 
     async function sendMessage() {
         if (isRequestPending || !userInput.value.trim()) {
-            return; // Prevent sending a new message if a request is pending or input is empty
+            return;
         }
 
         const userMessage = userInput.value.trim();
@@ -119,14 +114,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         appendMessage('user', userMessage);
         userInput.value = '';
-        isRequestPending = true; // Set the flag when starting a new request
-        sendButton.disabled = true; // Disable the button
-        sendButton.classList.add('disabled'); // Add disabled class
+        isRequestPending = true;
+        sendButton.disabled = true;
+        sendButton.classList.add('disabled');
 
         const { newContext } = await llama3(userMessage, chatContext);
-        chatContext = newContext; // Update the context with the new context
+        chatContext = newContext;
+    }
 
-        // Save conversation to localStorage
+    function saveCurrentConversation() {
         const conversationName = prompt('Enter a name for this conversation:', `Conversation ${Object.keys(conversations).length + 1}`);
         if (conversationName) {
             conversations[conversationName] = { context: chatContext, messages: chatBox.innerHTML };
@@ -135,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    userInput.addEventListener('input', updateSendButtonState); // Add input event listener to update button state
+    userInput.addEventListener('input', updateSendButtonState);
 
     userInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
@@ -148,14 +144,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    sendButton.addEventListener('click', sendMessage); // Add event listener for send button
-    newConversationButton.addEventListener('click', newConversation); // Add event listener for new conversation button
+    sendButton.addEventListener('click', sendMessage);
+    newConversationButton.addEventListener('click', newConversation);
+    saveConversationButton.addEventListener('click', saveCurrentConversation);
+    deleteButton.addEventListener('click', deleteHistory);
 
     window.sendMessage = sendMessage;
 
-    updateSendButtonState(); // Initial call to update button state
-    loadConversations(); // Load saved conversations from localStorage
-    loadMenu(); // Load the menu with saved conversations
+    updateSendButtonState();
+    loadConversations();
+    loadMenu();
 });
 
 function updateSendButtonState() {
@@ -167,11 +165,11 @@ function updateSendButtonState() {
 }
 
 function deleteHistory() {
-    chatBox.innerHTML = ''; // Clear all content in the chat box
-    chatContext = []; // Clear the chat context
-    isRequestPending = false; // Reset the flag when clearing history
-    sendButton.disabled = false; // Enable the button
-    sendButton.classList.remove('disabled'); // Remove disabled class
+    chatBox.innerHTML = '';
+    chatContext = [];
+    isRequestPending = false;
+    sendButton.disabled = false;
+    sendButton.classList.remove('disabled');
 }
 
 function saveConversations() {
@@ -187,7 +185,6 @@ function loadConversations() {
 
 function loadMenu() {
     const menuBar = document.getElementById('menu-bar');
-    // Remove existing buttons except "New Conversation"
     while (menuBar.childNodes.length > 1) {
         menuBar.removeChild(menuBar.lastChild);
     }

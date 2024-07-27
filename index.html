@@ -8,14 +8,19 @@
 </head>
 <body>
     <div class="chat-container">
+        <div class="menu-bar" id="menu-bar">
+            <button id="new-conversation-button" class="menu-button">New Conversation</button>
+        </div>
         <div id="chat-box" class="chat-box"></div>
         <div class="input-container">
-            <input type="text" id="user-input" placeholder="Type your message here...">
-            <button id="send-button" onclick="sendMessage()">Send</button>
-            <button id="delete-button" onclick="deleteHistory()">Delete History</button>
+            <input type="text" id="user-input" placeholder="Type a message...">
+            <div class="button-container">
+                <button id="send-button" class="icon-button">Send</button>
+                <button id="save-button" class="icon-button">Save</button>
+                <button id="delete-button" class="icon-button">Delete</button>
+            </div>
         </div>
     </div>
     <script src="chat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </body>
 </html>
