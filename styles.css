@@ -190,3 +190,41 @@ input[type="text"]:focus {
         font-size: 12px; /* Adjust font size for menu buttons on smaller screens */
     }
 }
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background: linear-gradient(135deg, #2C3E50 0%, #29539B 100%);
+}
+
+/* Menu Button Container */
+.button-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Delete Button */
+.delete-button {
+    padding: 2px 5px;
+    border: none;
+    border-radius: 50%;
+    background-color: #ff0000;
+    color: white;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.delete-button:hover {
+    background-color: #cc0000;
+    transform: scale(1.1);
+}
+
+.delete-button:active {
+    transform: scale(1);
+}

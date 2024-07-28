@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton.addEventListener('click', sendMessage);
     newConversationButton.addEventListener('click', newConversation);
     saveConversationButton.addEventListener('click', saveCurrentConversation);
-    deleteButton.addEventListener('click', deleteHistory);
+    deleteButton.addEventListener('click', deleteCurrentConversation);
 
     window.sendMessage = sendMessage;
 
@@ -164,12 +164,22 @@ function updateSendButtonState() {
     sendButton.classList.toggle('disabled', isButtonDisabled);
 }
 
-function deleteHistory() {
-    chatBox.innerHTML = '';
-    chatContext = [];
-    isRequestPending = false;
-    sendButton.disabled = false;
-    sendButton.classList.remove('disabled');
+function deleteCurrentConversation() {
+    if (confirm('Are you sure you want to delete the current conversation?')) {
+        chatBox.innerHTML = '';
+        chatContext = [];
+        isRequestPending = false;
+        sendButton.disabled = false;
+        sendButton.classList.remove('disabled');
+    }
+}
+
+function deleteConversation(name) {
+    if (confirm(`Are you sure you want to delete the conversation "${name}"?`)) {
+        delete conversations[name];
+        saveConversations();
+        loadMenu();
+    }
 }
 
 function saveConversations() {
@@ -190,15 +200,27 @@ function loadMenu() {
     }
 
     Object.keys(conversations).forEach(name => {
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'button-container';
+
         const button = document.createElement('button');
+        button.className = 'menu-button';
         button.textContent = name;
         button.onclick = () => loadConversation(name);
-        menuBar.appendChild(button);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-button';
+        deleteBtn.textContent = 'X';
+        deleteBtn.onclick = () => deleteConversation(name);
+
+        buttonContainer.appendChild(button);
+        buttonContainer.appendChild(deleteBtn);
+        menuBar.appendChild(buttonContainer);
     });
 }
 
 function newConversation() {
-    deleteHistory();
+    deleteCurrentConversation();
     chatContext = [];
 }
 
