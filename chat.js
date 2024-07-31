@@ -1,11 +1,15 @@
 const url = "http://localhost:11434/api/generate";
+const imageUrl = "http://localhost:11434/api/generate";
 
 let chatBox = null;
 let userInput = null;
 let sendButton = null;
+let uploadButton = null;
+let imageInput = null;
 let chatContext = [];
 let isRequestPending = false;
 let conversations = {};
+let imagePresent = false; // Flag to indicate if an image is present
 
 function appendMessage(role, text) {
     const messageDiv = document.createElement('div');
@@ -16,22 +20,21 @@ function appendMessage(role, text) {
     return messageDiv;
 }
 
-async function llama3(prompt, context = null) {
+async function llama3(prompt, context = []) {
     const data = {
         model: "zlashAi",
         prompt: prompt,
         stream: true,
+        context: Array.isArray(context) ? context : [] // Ensure context is always an array
     };
-
-    if (context) {
-        data.context = context;
-    }
 
     const headers = {
         'Content-Type': 'application/json'
     };
 
     try {
+        console.log("Sending data:", JSON.stringify(data));
+
         const response = await fetch(url, {
             method: 'POST',
             headers: headers,
@@ -45,7 +48,7 @@ async function llama3(prompt, context = null) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
-        let newContext = context ? context : [];
+        let newContext = context;
         let botMessageDiv = null;
 
         while (true) {
@@ -60,7 +63,6 @@ async function llama3(prompt, context = null) {
 
                 if (responseData.response) {
                     buffer = responseData.response;
-
                     const formattedText = buffer.replace(/\s([.,!?;:])/g, '$1');
 
                     if (!botMessageDiv) {
@@ -68,12 +70,11 @@ async function llama3(prompt, context = null) {
                     }
 
                     botMessageDiv.textContent += formattedText;
-
                     buffer = '';
                 }
 
                 if (responseData.context) {
-                    newContext = responseData.context;
+                    newContext = Array.isArray(responseData.context) ? responseData.context : [];
                 }
 
                 if (responseData.done) {
@@ -88,6 +89,7 @@ async function llama3(prompt, context = null) {
         return { content: buffer, newContext };
     } catch (e) {
         console.error("Request Error:", e);
+        return { content: '', newContext: context };
     } finally {
         isRequestPending = false;
         sendButton.disabled = false;
@@ -96,10 +98,99 @@ async function llama3(prompt, context = null) {
     }
 }
 
+async function llava(image, prompt, context = []) {
+    const data = {
+        image: image, // This would be a base64 encoded string or similar representation
+        prompt: prompt,
+        model: 'llava',
+        context: Array.isArray(context) ? context : []
+    };
+
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+
+    try {
+        console.log("Sending data:", JSON.stringify(data));
+
+        const response = await fetch(imageUrl, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let botMessageDiv = null;
+        let newContext = context;
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const decodedLine = decoder.decode(value, { stream: true });
+            buffer += decodedLine;
+
+            // Process complete JSON objects from buffer
+            while (true) {
+                const endIndex = buffer.indexOf('}\n{');
+                if (endIndex === -1) break;
+
+                const completeChunk = buffer.slice(0, endIndex + 1);
+                buffer = buffer.slice(endIndex + 2);
+
+                try {
+                    const responseData = JSON.parse(completeChunk);
+
+                    if (responseData.response) {
+                        const formattedText = responseData.response.replace(/\s([.,!?;:])/g, '$1');
+
+                        if (!botMessageDiv) {
+                            botMessageDiv = appendMessage('bot', '');
+                        }
+
+                        botMessageDiv.textContent += formattedText;
+                        botMessageDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    }
+
+                    if (responseData.context) {
+                        newContext = Array.isArray(responseData.context) ? responseData.context : [];
+                    }
+
+                    if (responseData.done) {
+                        botMessageDiv.innerHTML = marked.parse(botMessageDiv.innerHTML);
+                        break;
+                    }
+                } catch (e) {
+                    console.error("JSON Decode Error:", e);
+                }
+            }
+        }
+
+        return { content: buffer, newContext };
+    } catch (e) {
+        console.error("Request Error:", e);
+        return { content: '', newContext: context };
+    } finally {
+        isRequestPending = false;
+        sendButton.disabled = false;
+        sendButton.classList.remove('disabled');
+        updateSendButtonState();
+    }
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
     chatBox = document.getElementById('chat-box');
     userInput = document.getElementById('user-input');
     sendButton = document.getElementById('send-button');
+    uploadButton = document.getElementById('upload-button');
+    imageInput = document.getElementById('image-input');
     const newConversationButton = document.getElementById('new-conversation-button');
     const saveConversationButton = document.getElementById('save-button');
     const deleteButton = document.getElementById('delete-button');
@@ -108,19 +199,44 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isRequestPending || !userInput.value.trim()) {
             return;
         }
-
+    
         const userMessage = userInput.value.trim();
         if (!userMessage) return;
-
+    
         appendMessage('user', userMessage);
         userInput.value = '';
         isRequestPending = true;
         sendButton.disabled = true;
         sendButton.classList.add('disabled');
-
-        const { newContext } = await llama3(userMessage, chatContext);
-        chatContext = newContext;
-    }
+    
+        let result = { content: '', newContext: [] };
+        try {
+            if (imagePresent) {
+                const imageFile = imageInput.files[0];
+                // Convert the image file to base64 or appropriate format if required
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    const base64Image = reader.result;
+                    result = await llava(base64Image, userMessage, chatContext);
+                };
+                reader.readAsDataURL(imageFile); // Read file as base64
+            } else {
+                result = await llama3(userMessage, chatContext);
+            }
+    
+            chatContext = result.newContext;
+            imagePresent = false; // Reset the flag after processing
+            imageInput.value = ''; // Clear the input
+    
+        } catch (error) {
+            console.error("Message Sending Error:", error);
+        } finally {
+            isRequestPending = false;
+            sendButton.disabled = false;
+            sendButton.classList.remove('disabled');
+            updateSendButtonState();
+        }
+    }    
 
     function saveCurrentConversation() {
         const conversationName = prompt('Enter a name for this conversation:', `Conversation ${Object.keys(conversations).length + 1}`);
@@ -145,6 +261,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     sendButton.addEventListener('click', sendMessage);
+    uploadButton.addEventListener('click', () => imageInput.click());
+    imageInput.addEventListener('change', () => {
+        if (imageInput.files.length > 0) {
+            imagePresent = true; // Set the flag if an image is selected
+            appendMessage('user', `<img src="${URL.createObjectURL(imageInput.files[0])}" alt="Image" style="max-width: 100%;">`);
+        }
+    });
+
     newConversationButton.addEventListener('click', newConversation);
     saveConversationButton.addEventListener('click', saveCurrentConversation);
     deleteButton.addEventListener('click', deleteCurrentConversation);
@@ -157,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function updateSendButtonState() {
-    const isInputEmpty = !userInput.value.trim();
+    const isInputEmpty = !userInput.value.trim() && !imagePresent;
     const isButtonDisabled = isRequestPending || isInputEmpty;
 
     sendButton.disabled = isButtonDisabled;
