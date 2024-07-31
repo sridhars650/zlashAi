@@ -11,10 +11,12 @@ let imageData = null; // Store image data
 let conversations = {}; // Object to hold saved conversations
 let currentConversation = null; // Store the name of the current conversation
 
+// Initialize markdown-it
+const md = window.markdownit();
+    
 function appendMessage(role, text, imageData = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
-    
 
     if (imageData) {
         const image = document.createElement('img');
@@ -79,7 +81,7 @@ async function llama3(prompt, imageData = null) {
                 const responseData = JSON.parse(buffer);
         
                 if (responseData.message && responseData.message.content) {
-                    const content = responseData.message.content.replace(/\s([.,!?;:])/g, '$1');
+                    const content = responseData.message.content.replace(/\s(?<!\n)([.,!?;:])/g, '$1');
         
                     if (!botMessageDiv) {
                         botMessageDiv = appendMessage('bot', '');
@@ -94,7 +96,7 @@ async function llama3(prompt, imageData = null) {
                 }
         
                 if (responseData.done) {
-                    botMessageDiv.innerHTML = marked.parse(botMessageDiv.innerHTML);
+                    botMessageDiv.innerHTML = md.render(botMessageDiv.innerHTML); // Use markdown-it for rendering markdown
                     chatBox.scrollTop = chatBox.scrollHeight; // Ensure it scrolls one last time
                     chatContext.push({
                         role: "assistant",
@@ -268,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             reader.onload = (e) => {
                 imageData = e.target.result;
-                appendMessage('user', marked.parse('*This image is selected. Type a message to send with this image.*'), imageData); // Append image message immediately
+                appendMessage('user', md.render('*This image is selected. Type a message to send with this image.*'), imageData); // Append image message immediately
             };
 
             reader.readAsDataURL(file);
