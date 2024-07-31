@@ -8,6 +8,7 @@ let chatContext = [];
 let isRequestPending = false;
 let imagePresent = false; // Flag to indicate if an image is present
 let imageData = null; // Store image data
+let conversations = {}; // Object to hold saved conversations
 
 function appendMessage(role, text, imageData = null) {
     const messageDiv = document.createElement('div');
@@ -29,9 +30,13 @@ function appendMessage(role, text, imageData = null) {
     }
 
     chatBox.appendChild(messageDiv);
+
+    // Ensure the chat box scrolls to the bottom
     chatBox.scrollTop = chatBox.scrollHeight;
+
     return messageDiv;
 }
+
 
 async function llama3(prompt, context = [], imageData = null) {
     const data = {
@@ -72,32 +77,37 @@ async function llama3(prompt, context = [], imageData = null) {
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-
+        
             const decodedLine = decoder.decode(value, { stream: true });
             buffer += decodedLine;
-
+        
             try {
                 const responseData = JSON.parse(buffer);
-
+        
                 if (responseData.message && responseData.message.content) {
                     const content = responseData.message.content.replace(/\s([.,!?;:])/g, '$1');
-
+        
                     if (!botMessageDiv) {
                         botMessageDiv = appendMessage('bot', '');
                     }
-
+        
                     botMessageDiv.textContent += content;
+        
+                    // Update scroll position to show new text
+                    chatBox.scrollTop = chatBox.scrollHeight;
+        
                     buffer = '';
                 }
-
+        
                 if (responseData.done) {
                     botMessageDiv.innerHTML = marked.parse(botMessageDiv.innerHTML);
+                    chatBox.scrollTop = chatBox.scrollHeight; // Ensure it scrolls one last time
                     break;
                 }
             } catch (e) {
                 console.error("JSON Decode Error:", e);
             }
-        }
+        }        
 
         return { content: buffer, newContext };
     } catch (e) {
@@ -119,12 +129,91 @@ function updateSendButtonState() {
     }
 }
 
+function saveCurrentConversation() {
+    const conversationName = prompt('Enter a name for this conversation:', `Conversation ${Object.keys(conversations).length + 1}`);
+    if (conversationName) {
+        conversations[conversationName] = { context: chatContext, messages: chatBox.innerHTML };
+        saveConversations();
+        loadMenu();
+    }
+}
+
+function deleteCurrentConversation() {
+    if (confirm('Are you sure you want to delete the current conversation?')) {
+        chatBox.innerHTML = '';
+        chatContext = [];
+        isRequestPending = false;
+        updateSendButtonState();
+    }
+}
+
+function deleteConversation(name) {
+    if (confirm(`Are you sure you want to delete the conversation "${name}"?`)) {
+        delete conversations[name];
+        saveConversations();
+        loadMenu();
+    }
+}
+
+function saveConversations() {
+    localStorage.setItem('conversations', JSON.stringify(conversations));
+}
+
+function loadConversations() {
+    const savedConversations = JSON.parse(localStorage.getItem('conversations'));
+    if (savedConversations) {
+        conversations = savedConversations;
+    }
+}
+
+function loadMenu() {
+    const menuBar = document.getElementById('menu-bar');
+    while (menuBar.childNodes.length > 1) {
+        menuBar.removeChild(menuBar.lastChild);
+    }
+
+    Object.keys(conversations).forEach(name => {
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'button-container';
+
+        const button = document.createElement('button');
+        button.className = 'menu-button';
+        button.textContent = name;
+        button.onclick = () => loadConversation(name);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-button';
+        deleteBtn.textContent = 'X';
+        deleteBtn.onclick = () => deleteConversation(name);
+
+        buttonContainer.appendChild(button);
+        buttonContainer.appendChild(deleteBtn);
+        menuBar.appendChild(buttonContainer);
+    });
+}
+
+function newConversation() {
+    deleteCurrentConversation();
+    chatContext = [];
+}
+
+function loadConversation(name) {
+    const conversation = conversations[name];
+    if (conversation) {
+        chatBox.innerHTML = conversation.messages;
+        chatContext = conversation.context;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     chatBox = document.getElementById('chat-box');
     userInput = document.getElementById('user-input');
     sendButton = document.getElementById('send-button');
     uploadButton = document.getElementById('upload-button');
     imageInput = document.getElementById('image-input');
+    const saveConversationButton = document.getElementById('save-button');
+    const newConversationButton = document.getElementById('new-conversation-button');
+    const deleteButton = document.getElementById('delete-button');
 
     sendButton.addEventListener('click', async () => {
         if (isRequestPending) return;
@@ -155,7 +244,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             reader.onload = (e) => {
                 imageData = e.target.result;
-                
                 appendMessage('user', marked.parse('*This image is selected. Type a message to send with this image.*'), imageData); // Append image message immediately
             };
 
@@ -176,5 +264,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    saveConversationButton.addEventListener('click', saveCurrentConversation);
+    newConversationButton.addEventListener('click', newConversation);
+    deleteButton.addEventListener('click', deleteCurrentConversation);
+
     updateSendButtonState();
+    loadConversations();
+    loadMenu();
 });

@@ -66,6 +66,7 @@ body {
     flex: 1; /* Allow it to grow and shrink */
     padding: 20px;
     overflow-y: auto; /* Enable vertical scrolling */
+    scroll-behavior: smooth; /* Add this for smooth scrolling */
     border-bottom: 1px solid #ccc;
     background-color: #f9f9f9;
 }
