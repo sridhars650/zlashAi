@@ -4,15 +4,23 @@ let userInput = document.getElementById('user-input');
 let sendButton = document.getElementById('send-button');
 let uploadButton = document.getElementById('upload-button');
 let imageInput = document.getElementById('image-input');
-let chatContext = [];
+let chatContext = []; // Stores conversation history
 let isRequestPending = false;
 let imagePresent = false; // Flag to indicate if an image is present
 let imageData = null; // Store image data
 let conversations = {}; // Object to hold saved conversations
+let currentConversation = null; // Store the name of the current conversation
 
 function appendMessage(role, text, imageData = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
+    
+    // Add timestamp
+    const timestamp = new Date().toLocaleTimeString();
+    const timestampDiv = document.createElement('div');
+    timestampDiv.className = 'timestamp';
+    timestampDiv.innerText = timestamp;
+    messageDiv.appendChild(timestampDiv);
 
     if (imageData) {
         const image = document.createElement('img');
@@ -37,17 +45,14 @@ function appendMessage(role, text, imageData = null) {
     return messageDiv;
 }
 
-
-async function llama3(prompt, context = [], imageData = null) {
+async function llama3(prompt, imageData = null) {
     const data = {
         model: imagePresent ? "llava" : "zlashAi",
-        messages: [
-            {
-                role: "user",
-                content: prompt,
-                images: imageData ? [imageData] : []
-            }
-        ],
+        messages: chatContext.concat([{
+            role: "user",
+            content: prompt,
+            images: imageData ? [imageData] : []
+        }]),
         stream: true
     };
 
@@ -71,7 +76,6 @@ async function llama3(prompt, context = [], imageData = null) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
-        let newContext = context;
         let botMessageDiv = null;
 
         while (true) {
@@ -109,10 +113,10 @@ async function llama3(prompt, context = [], imageData = null) {
             }
         }        
 
-        return { content: buffer, newContext };
+        return { content: buffer };
     } catch (e) {
         console.error("Request Error:", e);
-        return { content: '', newContext: context };
+        return { content: '' };
     } finally {
         isRequestPending = false;
         updateSendButtonState();
@@ -130,11 +134,18 @@ function updateSendButtonState() {
 }
 
 function saveCurrentConversation() {
-    const conversationName = prompt('Enter a name for this conversation:', `Conversation ${Object.keys(conversations).length + 1}`);
-    if (conversationName) {
-        conversations[conversationName] = { context: chatContext, messages: chatBox.innerHTML };
+    if (currentConversation) {
+        conversations[currentConversation] = { context: chatContext, messages: chatBox.innerHTML };
         saveConversations();
         loadMenu();
+    } else {
+        const conversationName = prompt('Enter a name for this conversation:', `Conversation ${Object.keys(conversations).length + 1}`);
+        if (conversationName) {
+            conversations[conversationName] = { context: chatContext, messages: chatBox.innerHTML };
+            currentConversation = conversationName;
+            saveConversations();
+            loadMenu();
+        }
     }
 }
 
@@ -144,12 +155,23 @@ function deleteCurrentConversation() {
         chatContext = [];
         isRequestPending = false;
         updateSendButtonState();
+        if (currentConversation) {
+            delete conversations[currentConversation];
+            saveConversations();
+            loadMenu();
+            currentConversation = null;
+        }
     }
 }
 
 function deleteConversation(name) {
     if (confirm(`Are you sure you want to delete the conversation "${name}"?`)) {
         delete conversations[name];
+        if (currentConversation === name) {
+            chatBox.innerHTML = '';
+            chatContext = [];
+            currentConversation = null;
+        }
         saveConversations();
         loadMenu();
     }
@@ -202,6 +224,7 @@ function loadConversation(name) {
     if (conversation) {
         chatBox.innerHTML = conversation.messages;
         chatContext = conversation.context;
+        currentConversation = name; // Set the current conversation name
     }
 }
 
@@ -221,14 +244,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const prompt = userInput.value;
         if (!prompt.trim()) return;
 
+        // Add user message to chat context
+        chatContext.push({
+            role: "user",
+            content: prompt,
+            images: imageData ? [imageData.split(',')[1]] : []
+        });
+
         appendMessage('user', prompt);
         userInput.value = '';
 
         isRequestPending = true;
         updateSendButtonState();
 
-        const response = await llama3(prompt, chatContext, imageData ? imageData.split(',')[1] : null);
-        chatContext = response.newContext;
+        const response = await llama3(prompt, imageData ? imageData.split(',')[1] : null);
+        chatContext.push({
+            role: "assistant",
+            content: response.content
+        });
+
+        // Append bot response
+        appendMessage('bot', response.content);
     });
 
     uploadButton.addEventListener('click', () => {
@@ -258,17 +294,16 @@ document.addEventListener('DOMContentLoaded', () => {
     userInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            if (!sendButton.disabled) {
-                sendButton.click();
-            }
+            sendButton.click();
         }
     });
 
     saveConversationButton.addEventListener('click', saveCurrentConversation);
+
     newConversationButton.addEventListener('click', newConversation);
+
     deleteButton.addEventListener('click', deleteCurrentConversation);
 
-    updateSendButtonState();
     loadConversations();
     loadMenu();
 });
