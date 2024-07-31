@@ -6,7 +6,7 @@ body {
     align-items: center;
     height: 100vh;
     margin: 0;
-    background-color: #e0e0e0;
+    background: linear-gradient(135deg, #2C3E50 0%, #29539B 100%);
 }
 
 /* Chat Container */
@@ -21,6 +21,7 @@ body {
     overflow: hidden;
     margin: 0 auto;
     padding: 15px;
+    height: 90vh; /* Adjust height as needed */
 }
 
 /* Menu Bar */
@@ -62,12 +63,11 @@ body {
 
 /* Chat Box */
 .chat-box {
-    flex: 1;
+    flex: 1; /* Allow it to grow and shrink */
     padding: 20px;
-    overflow-y: auto;
+    overflow-y: auto; /* Enable vertical scrolling */
     border-bottom: 1px solid #ccc;
     background-color: #f9f9f9;
-    height: 350px; /* Adjust as needed */
 }
 
 /* Input Container */
@@ -191,23 +191,6 @@ input[type="text"]:focus {
     }
 }
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    background: linear-gradient(135deg, #2C3E50 0%, #29539B 100%);
-}
-
-/* Menu Button Container */
-.button-container {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
 /* Delete Button */
 .delete-button {
     padding: 2px 5px;
@@ -228,3 +211,4 @@ body {
 .delete-button:active {
     transform: scale(1);
 }
+
