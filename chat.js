@@ -15,12 +15,6 @@ function appendMessage(role, text, imageData = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
     
-    // Add timestamp
-    const timestamp = new Date().toLocaleTimeString();
-    const timestampDiv = document.createElement('div');
-    timestampDiv.className = 'timestamp';
-    timestampDiv.innerText = timestamp;
-    messageDiv.appendChild(timestampDiv);
 
     if (imageData) {
         const image = document.createElement('img');
@@ -48,11 +42,7 @@ function appendMessage(role, text, imageData = null) {
 async function llama3(prompt, imageData = null) {
     const data = {
         model: imagePresent ? "llava" : "zlashAi",
-        messages: chatContext.concat([{
-            role: "user",
-            content: prompt,
-            images: imageData ? [imageData] : []
-        }]),
+        messages: chatContext,
         stream: true
     };
 
@@ -94,7 +84,7 @@ async function llama3(prompt, imageData = null) {
                     if (!botMessageDiv) {
                         botMessageDiv = appendMessage('bot', '');
                     }
-        
+                    
                     botMessageDiv.textContent += content;
         
                     // Update scroll position to show new text
@@ -106,6 +96,10 @@ async function llama3(prompt, imageData = null) {
                 if (responseData.done) {
                     botMessageDiv.innerHTML = marked.parse(botMessageDiv.innerHTML);
                     chatBox.scrollTop = chatBox.scrollHeight; // Ensure it scrolls one last time
+                    chatContext.push({
+                        role: "assistant",
+                        content: botMessageDiv.textContent
+                    });
                     break;
                 }
             } catch (e) {
@@ -258,13 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSendButtonState();
 
         const response = await llama3(prompt, imageData ? imageData.split(',')[1] : null);
-        chatContext.push({
-            role: "assistant",
-            content: response.content
-        });
-
-        // Append bot response
-        appendMessage('bot', response.content);
+        
     });
 
     uploadButton.addEventListener('click', () => {
