@@ -2,6 +2,7 @@ const url = "http://localhost:11434/api/chat";  // API endpoint
 let chatBox = document.getElementById('chat-box');
 let userInput = document.getElementById('user-input');
 let sendButton = document.getElementById('send-button');
+let stopButton = document.getElementById('stop-button'); // Add this line
 let uploadButton = document.getElementById('upload-button');
 let imageInput = document.getElementById('image-input');
 let loadingLogo = document.getElementById('loading-logo'); // Loading logo element
@@ -11,6 +12,7 @@ let imagePresent = false; // Flag to indicate if an image is present
 let imageData = null; // Store image data
 let conversations = {}; // Object to hold saved conversations
 let currentConversation = null; // Store the name of the current conversation
+let abortController = null; // Controller for aborting requests
 
 // Initialize markdown-it
 const md = window.markdownit();
@@ -43,6 +45,11 @@ function appendMessage(role, text, imageData = null) {
 }
 
 async function llama3(prompt, imageData = null) {
+    if (abortController) {
+        abortController.abort(); // Abort the previous request if any
+    }
+    abortController = new AbortController(); // Create a new AbortController
+
     const data = {
         model: imagePresent ? "llava" : "zlashAi",
         messages: chatContext,
@@ -62,7 +69,8 @@ async function llama3(prompt, imageData = null) {
         const response = await fetch(url, {
             method: 'POST',
             headers: headers,
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
+            signal: abortController.signal // Pass the AbortSignal
         });
 
         if (!response.ok) {
@@ -120,7 +128,11 @@ async function llama3(prompt, imageData = null) {
 
         return { content: buffer };
     } catch (e) {
-        console.error("Request Error:", e);
+        if (e.name === 'AbortError') {
+            console.log('Request was aborted');
+        } else {
+            console.error("Request Error:", e);
+        }
         return { content: '' };
     } finally {
         isRequestPending = false;
@@ -134,9 +146,21 @@ function updateSendButtonState() {
     if (!userInput.value.trim() || isRequestPending) {
         sendButton.disabled = true;
         sendButton.classList.add('disabled');
+        stopButton.style.display = 'none'; // Hide stop button
     } else {
         sendButton.disabled = false;
         sendButton.classList.remove('disabled');
+        stopButton.style.display = 'none'; // Hide stop button
+    }
+}
+
+function updateButtonState() {
+    if (isRequestPending) {
+        sendButton.style.display = 'none'; // Hide send button
+        stopButton.style.display = 'inline'; // Show stop button
+    } else {
+        sendButton.style.display = 'inline'; // Show send button
+        stopButton.style.display = 'none'; // Hide stop button
     }
 }
 
@@ -239,6 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chatBox = document.getElementById('chat-box');
     userInput = document.getElementById('user-input');
     sendButton = document.getElementById('send-button');
+    stopButton = document.getElementById('stop-button'); // Add this line
     uploadButton = document.getElementById('upload-button');
     imageInput = document.getElementById('image-input');
     loadingLogo = document.getElementById('loading-logo'); // Get the loading logo element
@@ -263,10 +288,18 @@ document.addEventListener('DOMContentLoaded', () => {
         userInput.value = '';
 
         isRequestPending = true;
-        updateSendButtonState();
+        updateButtonState(); // Update button state to show stop button
 
         const response = await llama3(prompt, imageData ? imageData.split(',')[1] : null);
         
+    });
+
+    stopButton.addEventListener('click', () => {
+        if (abortController) {
+            abortController.abort(); // Abort the ongoing request
+        }
+        isRequestPending = false;
+        updateButtonState(); // Update button state to show send button
     });
 
     uploadButton.addEventListener('click', () => {
