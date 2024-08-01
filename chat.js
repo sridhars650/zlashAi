@@ -86,7 +86,6 @@ async function llama3(prompt, imageData = null) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            // Hide loading logo
             if (loadingLogo.style.display === 'block') {
                 loadingLogo.style.display = 'none';
             }
@@ -136,33 +135,49 @@ async function llama3(prompt, imageData = null) {
         return { content: '' };
     } finally {
         isRequestPending = false;
-        updateSendButtonState();
+        updateButtonState(); // Update button state to show send button
         // Ensure loading logo is hidden if an error occurs
         loadingLogo.style.display = 'none';
     }
 }
 
+
 function updateSendButtonState() {
     if (!userInput.value.trim() || isRequestPending) {
         sendButton.disabled = true;
         sendButton.classList.add('disabled');
-        stopButton.style.display = 'none'; // Hide stop button
     } else {
         sendButton.disabled = false;
         sendButton.classList.remove('disabled');
-        stopButton.style.display = 'none'; // Hide stop button
     }
 }
 
 function updateButtonState() {
     if (isRequestPending) {
+        sendButton.classList.add('fade-out');
+        stopButton.classList.remove('fade-out');
+        stopButton.classList.add('fade-in');
         sendButton.style.display = 'none'; // Hide send button
         stopButton.style.display = 'inline'; // Show stop button
     } else {
+        sendButton.classList.remove('fade-out');
+        sendButton.classList.add('fade-in');
+        stopButton.classList.remove('fade-in');
+        stopButton.classList.add('fade-out');
         sendButton.style.display = 'inline'; // Show send button
         stopButton.style.display = 'none'; // Hide stop button
     }
+
+    // Also update the send button state based on the text area content
+    if (!userInput.value.trim() || isRequestPending) {
+        sendButton.disabled = true;
+        sendButton.classList.add('disabled');
+    } else {
+        sendButton.disabled = false;
+        sendButton.classList.remove('disabled');
+    }
 }
+
 
 function saveCurrentConversation() {
     if (currentConversation) {
@@ -273,26 +288,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     sendButton.addEventListener('click', async () => {
         if (isRequestPending) return;
-
+    
         const prompt = userInput.value;
         if (!prompt.trim()) return;
-
+    
         // Add user message to chat context
         chatContext.push({
             role: "user",
             content: prompt,
             images: imageData ? [imageData.split(',')[1]] : []
         });
-
+    
         appendMessage('user', prompt);
         userInput.value = '';
-
+    
         isRequestPending = true;
         updateButtonState(); // Update button state to show stop button
-
+    
         const response = await llama3(prompt, imageData ? imageData.split(',')[1] : null);
-        
     });
+    
 
     stopButton.addEventListener('click', () => {
         if (abortController) {
