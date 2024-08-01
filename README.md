@@ -1,6 +1,9 @@
 # zlashAi
 zlashAi is a custom chatbot designed to provide friendly and engaging conversations. Built using the llama3.1 model and hosted locally through Ollama, zlashAi is tailored to offer helpful and accurate responses while maintaining a casual and personable tone.
 
+## Quick AI Note
+This project was done with ChatGPT as a guide. This means, it did indeed help me with some of the code, like structuring it or commenting on it so that future me or you guys could understand it. The main reasons why I used AI was for debugging and alternative ways. For example, I usually do nested for loops but GPT 4o mini suggested another method which made my life easier by sparing lines of code to write. Whenever, I don't understand something, I always ask it and I feel like it's best used to learn more about coding and how programs work. I also highly recommend you guys to use it if you are a beginner who is learning to code a new language and don't know to get started as I felt the documentation for javascript or learning it from scratch was overwhelming. 
+
 ## Features
 - Conversational AI: zlashAi is programmed to engage users in a relaxed and approachable manner, making interactions feel natural and enjoyable.
 - Markdown Support: Responses can be formatted using Markdown to enhance readability and user experience.
