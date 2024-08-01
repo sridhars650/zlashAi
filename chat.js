@@ -4,6 +4,7 @@ let userInput = document.getElementById('user-input');
 let sendButton = document.getElementById('send-button');
 let uploadButton = document.getElementById('upload-button');
 let imageInput = document.getElementById('image-input');
+let loadingLogo = document.getElementById('loading-logo'); // Loading logo element
 let chatContext = []; // Stores conversation history
 let isRequestPending = false;
 let imagePresent = false; // Flag to indicate if an image is present
@@ -13,7 +14,7 @@ let currentConversation = null; // Store the name of the current conversation
 
 // Initialize markdown-it
 const md = window.markdownit();
-    
+
 function appendMessage(role, text, imageData = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
@@ -54,6 +55,9 @@ async function llama3(prompt, imageData = null) {
 
     try {
         console.log("Sending data:", JSON.stringify(data));
+        
+        // Show loading logo
+        loadingLogo.style.display = 'block';
 
         const response = await fetch(url, {
             method: 'POST',
@@ -73,28 +77,33 @@ async function llama3(prompt, imageData = null) {
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-        
+
+            // Hide loading logo
+            if (loadingLogo.style.display === 'block') {
+                loadingLogo.style.display = 'none';
+            }
+
             const decodedLine = decoder.decode(value, { stream: true });
             buffer += decodedLine;
-        
+
             try {
                 const responseData = JSON.parse(buffer);
-        
+
                 if (responseData.message && responseData.message.content) {
                     const content = responseData.message.content.replace(/\s(?<!\n)([.,!?;:])/g, '$1');
-        
+
                     if (!botMessageDiv) {
                         botMessageDiv = appendMessage('bot', '');
                     }
                     
                     botMessageDiv.textContent += content;
-        
+
                     // Update scroll position to show new text
                     chatBox.scrollTop = chatBox.scrollHeight;
-        
+
                     buffer = '';
                 }
-        
+
                 if (responseData.done) {
                     botMessageDiv.innerHTML = md.render(botMessageDiv.innerHTML); // Use markdown-it for rendering markdown
                     chatBox.scrollTop = chatBox.scrollHeight; // Ensure it scrolls one last time
@@ -107,7 +116,7 @@ async function llama3(prompt, imageData = null) {
             } catch (e) {
                 console.error("JSON Decode Error:", e);
             }
-        }        
+        }
 
         return { content: buffer };
     } catch (e) {
@@ -116,6 +125,8 @@ async function llama3(prompt, imageData = null) {
     } finally {
         isRequestPending = false;
         updateSendButtonState();
+        // Ensure loading logo is hidden if an error occurs
+        loadingLogo.style.display = 'none';
     }
 }
 
@@ -230,6 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('send-button');
     uploadButton = document.getElementById('upload-button');
     imageInput = document.getElementById('image-input');
+    loadingLogo = document.getElementById('loading-logo'); // Get the loading logo element
     const saveConversationButton = document.getElementById('save-button');
     const newConversationButton = document.getElementById('new-conversation-button');
     const deleteButton = document.getElementById('delete-button');

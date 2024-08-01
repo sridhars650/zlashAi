@@ -21,7 +21,7 @@ body {
     overflow: hidden;
     margin: 0 auto;
     padding: 15px;
-    height: 90vh; /* Adjust height as needed */
+    height: 90vh;
 }
 
 /* Menu Bar */
@@ -33,27 +33,27 @@ body {
     background-color: #007bff;
     border-radius: 10px 10px 0 0;
     margin-top: 10px;
-    gap: 10px; /* Add gap between menu buttons */
-    overflow-x: auto; /* Make menu bar scrollable */
+    gap: 10px;
+    overflow-x: auto;
 }
 
 /* Menu Button */
 .menu-button {
     padding: 8px 16px;
     border: none;
-    border-radius: 20px; /* Rounder corners */
-    background-color: #ffffff; /* White background */
-    color: #007bff; /* Blue text color */
+    border-radius: 20px;
+    background-color: #ffffff;
+    color: #007bff;
     cursor: pointer;
     font-size: 14px;
     transition: background-color 0.3s ease, transform 0.2s ease, color 0.3s ease, box-shadow 0.3s ease;
-    white-space: nowrap; /* Prevent text wrapping */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow */
+    white-space: nowrap;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .menu-button:hover {
-    background-color: #e0e0e0; /* Light grey background on hover */
-    color: #0056b3; /* Darker blue text on hover */
+    background-color: #e0e0e0;
+    color: #0056b3;
     transform: scale(1.05);
 }
 
@@ -63,10 +63,10 @@ body {
 
 /* Chat Box */
 .chat-box {
-    flex: 1; /* Allow it to grow and shrink */
+    flex: 1;
     padding: 20px;
-    overflow-y: auto; /* Enable vertical scrolling */
-    scroll-behavior: smooth; /* Add this for smooth scrolling */
+    overflow-y: auto;
+    scroll-behavior: smooth;
     border-bottom: 1px solid #ccc;
     background-color: #f9f9f9;
 }
@@ -114,7 +114,7 @@ input[type="text"]:focus {
     cursor: pointer;
     font-size: 16px;
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .icon-button:hover {
@@ -183,12 +183,12 @@ input[type="text"]:focus {
     }
 
     .menu-bar {
-        gap: 5px; /* Reduce gap between menu buttons on smaller screens */
+        gap: 5px;
     }
 
     .menu-button {
-        padding: 6px 12px; /* Adjust padding for menu buttons on smaller screens */
-        font-size: 12px; /* Adjust font size for menu buttons on smaller screens */
+        padding: 6px 12px;
+        font-size: 12px;
     }
 }
 
@@ -212,4 +212,3 @@ input[type="text"]:focus {
 .delete-button:active {
     transform: scale(1);
 }
-
